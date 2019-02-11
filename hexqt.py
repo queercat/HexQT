@@ -1,22 +1,54 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QAction
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot
 
-class App(QWidget):
+class App(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title = 'PyQt5'
+
+        # Window options!
+        self.title = 'HexQT - Aren\'t I just a QT <3'
         self.left = 10
         self.top = 10
         self.width = 640
         self.height = 480
         self.initUI()
+
+    def openFile(self):
+        print('Open the file.')
     
     def initUI(self):
+        # Initialize basic window options.
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+
+        mainMenu = self.menuBar() # Creates a menu bar, (file, edit, options, etc...)
+
+        # Menus for window.
+        fileMenu = mainMenu.addMenu('File')
+        editMenu = mainMenu.addMenu('Edit')
+        viewMenu = mainMenu.addMenu('View')
+        helpMenu = mainMenu.addMenu('Help')
+
+        # Open menu.
+        openButton = QAction(QIcon(), 'Open', self)
+        openButton.setShortcut('Ctrl+O')
+        openButton.setStatusTip('Open file')
+        openButton.triggered.connect(self.openFile)
+
+        # Optional exit stuff.
+        exitButton = QAction(QIcon(), 'Exit', self)
+        exitButton.setShortcut('Ctrl+Q')
+        exitButton.setStatusTip('Exit application')
+        exitButton.triggered.connect(self.close)
+        
+        fileMenu.addAction(openButton)
+        fileMenu.addAction(exitButton)
+
+        # Show our masterpiece.
         self.show()
 
 def main():
