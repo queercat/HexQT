@@ -2,7 +2,7 @@
 
 import sys, os
 from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QHBoxLayout
-from PyQt5.QtGui import QIcon, QPalette, QColor
+from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase
 from PyQt5.QtCore import Qt, pyqtSlot
 
 class FileSelector(QFileDialog):
@@ -28,7 +28,7 @@ class App(QMainWindow):
         self.title = 'HexQT'
         self.left = 0
         self.top = 0
-        self.width = 640
+        self.width = 1280
         self.height = 480
         self.initUI()
 
@@ -38,7 +38,14 @@ class App(QMainWindow):
         with open(fileName, 'r') as fileObj:
             fileData = fileObj.read()
 
-        self.textArea.setText(fileData)
+        options = {
+            'rowSpacing': 4,
+            'rowLength': 16
+        }
+
+        text = generateView(fileData, options)
+        
+        self.textArea.setText(text)
 
     def openFile(self):
         fileSelect = FileSelector()
@@ -92,6 +99,37 @@ class App(QMainWindow):
         # Show our masterpiece.
         self.show()
 
+# generateView ... Generates text view for hexdump likedness.
+def generateView(text, options):
+    space = ' ' * 4
+    offset = 0x00000000
+    newText = format(offset, '08x') + space # Format to print hex properly.
+    asciiText = ''
+
+    rowSpacing = options['rowSpacing']
+    rowLength = options['rowLength']
+
+    for chars in range(0, len(text)):
+        char = text[chars]
+        newText += format((ord(char)), '02x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
+
+        if char is ' ':
+            asciiText += '.'
+        
+        else:
+            asciiText += repr(char).replace('\'', '')
+
+        if (chars + 1) % rowSpacing is 0:
+            newText += '  '
+
+        if (chars + 1) % rowLength is 0:
+            offset += rowLength
+            newText += space + asciiText + '\n\n' + format(offset, '08x') + space
+            
+            asciiText = ''
+
+    return newText
+
 # setStyle ... Sets the style of the QT Application.
 def setStyle(qApp):
     qApp.setStyle("Fusion")
@@ -116,6 +154,9 @@ def setStyle(qApp):
     dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 
+    font = QFont("DejaVu Sans Mono", 12, QFont.Normal, True)
+
+    qApp.setFont(font)
     qApp.setPalette(dark_palette)
 
     qApp.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
