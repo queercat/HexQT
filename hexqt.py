@@ -99,11 +99,15 @@ class App(QMainWindow):
         # Show our masterpiece.
         self.show()
 
+# addColor ... Returns HTML color encased text.
+def addColor(text, color):
+    return '<font color = "' + color + '">' + str(text) + '</font>'
+
 # generateView ... Generates text view for hexdump likedness.
 def generateView(text, options):
     space = ' ' * 4
     offset = 0x00000000
-    newText = format(offset, '08x') + space # Format to print hex properly.
+    newText = addColor(format(offset, '08x'), 'red') + space # Format to print hex properly.
     asciiText = ''
 
     rowSpacing = options['rowSpacing']
@@ -111,7 +115,7 @@ def generateView(text, options):
 
     for chars in range(0, len(text)):
         char = text[chars]
-        newText += format(char, '02x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
+        newText += format(char, '04x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
 
         if chr(char) is ' ':
             asciiText += '.'
@@ -124,7 +128,7 @@ def generateView(text, options):
 
         if (chars + 1) % rowLength is 0:
             offset += rowLength
-            newText += space + asciiText + '\n\n' + format(offset, '08x') + space
+            newText += space + asciiText + '<br><br>' + addColor(format(offset, '08x'), 'red') + space
             
             asciiText = ''
 
