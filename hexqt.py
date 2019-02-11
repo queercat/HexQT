@@ -1,9 +1,9 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
-import sys
+import sys, os
 from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QHBoxLayout
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QIcon, QPalette, QColor
+from PyQt5.QtCore import Qt, pyqtSlot
 
 class FileSelector(QFileDialog):
     def __init__(self):
@@ -26,37 +26,30 @@ class App(QMainWindow):
 
         # Window options!
         self.title = 'HexQT'
-        self.left = 10
-        self.top = 10
+        self.left = 0
+        self.top = 0
         self.width = 640
         self.height = 480
         self.initUI()
+
+    def readFile(self, fileName):
+        fileData = ''
+        
+        with open(fileName, 'r') as fileObj:
+            fileData = fileObj.read()
+
+        self.textArea.setText(fileData)
 
     def openFile(self):
         fileSelect = FileSelector()
         fileName = fileSelect.fileName
 
-    def createTextArea(self):
-        groupBox = QGroupBox('Text Area')
-        qhBox = QHBoxLayout()
+        self.readFile(fileName)
 
-        textArea = QTextEdit('Load File: Ctrl + O...')
-        qhBox.addWidget(textArea)
+    def createMainView(self):
+        self.textArea = QTextEdit()
 
-        groupBox.setLayout(qhBox)
-
-        return groupBox
-
-    def createHexArea(self):
-        groupBox = QGroupBox('Hex Area')
-        qhBox = QHBoxLayout()
-
-        hexArea = QTextEdit('Hex Area...')
-        qhBox.addWidget(hexArea)
-
-        groupBox.setLayout(qhBox)
-
-        return groupBox
+        return self.textArea
 
     def initUI(self):
         # Initialize basic window options.
@@ -91,8 +84,7 @@ class App(QMainWindow):
         gBox = QGroupBox()
 
         qLayout = QHBoxLayout()
-        qLayout.addWidget(self.createTextArea())
-        qLayout.addWidget(self.createHexArea())
+        qLayout.addWidget(self.createMainView())
         
         gBox.setLayout(qLayout)
         self.setCentralWidget(gBox)
@@ -100,8 +92,38 @@ class App(QMainWindow):
         # Show our masterpiece.
         self.show()
 
+# setStyle ... Sets the style of the QT Application.
+def setStyle(qApp):
+    qApp.setStyle("Fusion")
+
+    dark_palette = QPalette()
+
+    white = QColor(255, 255, 255)
+    red = QColor(255, 0, 0)
+    black = QColor(0, 0, 0)
+
+    dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.WindowText, Qt.white)
+    dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
+    dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+    dark_palette.setColor(QPalette.Text, white)
+    dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    dark_palette.setColor(QPalette.ButtonText, Qt.white)
+    dark_palette.setColor(QPalette.BrightText, Qt.white)
+    dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+    dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+    dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+
+    qApp.setPalette(dark_palette)
+
+    qApp.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
+
 def main():
-    app = QApplication(sys.argv)    
+    app = QApplication(sys.argv)
+    setStyle(app)
+    
     hexqt = App()
     sys.exit(app.exec_())
 
