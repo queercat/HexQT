@@ -35,7 +35,7 @@ class App(QMainWindow):
     def readFile(self, fileName):
         fileData = ''
         
-        with open(fileName, 'r') as fileObj:
+        with open(fileName, 'rb') as fileObj:
             fileData = fileObj.read()
 
         options = {
@@ -111,13 +111,13 @@ def generateView(text, options):
 
     for chars in range(0, len(text)):
         char = text[chars]
-        newText += format((ord(char)), '02x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
+        newText += format(char, '02x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
 
-        if char is ' ':
+        if chr(char) is ' ':
             asciiText += '.'
         
         else:
-            asciiText += repr(char).replace('\'', '')
+            asciiText += repr(chr(char)).replace('\'', '')
 
         if (chars + 1) % rowSpacing is 0:
             newText += '  '
