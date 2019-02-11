@@ -1,7 +1,7 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
 import sys
-from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout
+from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QHBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 
@@ -23,8 +23,6 @@ class FileSelector(QFileDialog):
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
-        
-        grid = QGridLayout()
 
         # Window options!
         self.title = 'HexQT'
@@ -37,6 +35,28 @@ class App(QMainWindow):
     def openFile(self):
         fileSelect = FileSelector()
         fileName = fileSelect.fileName
+
+    def createTextArea(self):
+        groupBox = QGroupBox('Text Area')
+        qhBox = QHBoxLayout()
+
+        textArea = QTextEdit('Load File: Ctrl + O...')
+        qhBox.addWidget(textArea)
+
+        groupBox.setLayout(qhBox)
+
+        return groupBox
+
+    def createHexArea(self):
+        groupBox = QGroupBox('Hex Area')
+        qhBox = QHBoxLayout()
+
+        hexArea = QTextEdit('Hex Area...')
+        qhBox.addWidget(hexArea)
+
+        groupBox.setLayout(qhBox)
+
+        return groupBox
 
     def initUI(self):
         # Initialize basic window options.
@@ -65,6 +85,17 @@ class App(QMainWindow):
         
         fileMenu.addAction(openButton)
         fileMenu.addAction(exitButton)
+
+        # Creating a groupbox layout.
+        
+        gBox = QGroupBox()
+
+        qLayout = QHBoxLayout()
+        qLayout.addWidget(self.createTextArea())
+        qLayout.addWidget(self.createHexArea())
+        
+        gBox.setLayout(qLayout)
+        self.setCentralWidget(gBox)
 
         # Show our masterpiece.
         self.show()
