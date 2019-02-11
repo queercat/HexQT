@@ -1,16 +1,33 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QPushButton, QAction
+from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
+
+class FileSelector(QFileDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.selectFile()      
+        self.show()
+
+    def selectFile(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"Directory View", "","All Files (*)", options=options)
+        
+        self.fileName = fileName
+        
 
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
+        
+        grid = QGridLayout()
 
         # Window options!
-        self.title = 'HexQT - Aren\'t I just a QT <3'
+        self.title = 'HexQT'
         self.left = 10
         self.top = 10
         self.width = 640
@@ -18,8 +35,9 @@ class App(QMainWindow):
         self.initUI()
 
     def openFile(self):
-        print('Open the file.')
-    
+        fileSelect = FileSelector()
+        fileName = fileSelect.fileName
+
     def initUI(self):
         # Initialize basic window options.
         self.setWindowTitle(self.title)
@@ -53,7 +71,7 @@ class App(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)    
-    ex = App()
+    hexqt = App()
     sys.exit(app.exec_())
 
 # Initialize the brogram.
