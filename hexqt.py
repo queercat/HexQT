@@ -59,6 +59,9 @@ class App(QMainWindow):
 
     def createMainView(self):
         self.textArea = QTextEdit()
+        
+        font = QFont("DejaVu Sans Mono", 8, QFont.Normal, True)
+        self.textArea.setFont(font)
 
         return self.textArea
 
@@ -116,17 +119,11 @@ class App(QMainWindow):
         # Show our masterpiece.
         self.show()
 
-# addColor ... Returns HTML color encased text.
-def addColor(text, color):
-    return '<font color = "' + color + '">' + str(text) + '</font>'
-
 # generateView ... Generates text view for hexdump likedness.
 def generateView(text, options):
     space = ' ' * 4
     offset = 0x00000000
-    fontStart = '<font size="3" face="Courier New">'
-    fontEnd = '</font>'
-    newText = fontStart + addColor(format(offset, '08x'), 'red') + space # Format to print hex properly.
+    newText =  format(offset, '08x') + space # Format to print hex properly.
     asciiText = ''
 
     rowSpacing = options['rowSpacing']
@@ -147,11 +144,11 @@ def generateView(text, options):
 
         if (chars + 1) % rowLength is 0:
             offset += rowLength
-            newText += space + asciiText + '<br><br>' + addColor(format(offset, '08x'), 'red') + space
+            newText += space + asciiText + '\n\n' + format(offset, '08x') + space
             
             asciiText = ''
 
-    return newText + fontEnd
+    return newText
 
 # setStyle ... Sets the style of the QT Application. Right now using edgy black.
 def setStyle(qApp):
@@ -173,9 +170,6 @@ def setStyle(qApp):
     dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 
-    # font = QFont("DejaVu Sans Mono", 12, QFont.Normal, True)
-
-    # qApp.setFont(font)
     qApp.setPalette(dark_palette)
 
     qApp.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
