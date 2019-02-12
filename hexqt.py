@@ -153,15 +153,11 @@ def generateView(text, options):
 
     return newText + fontEnd
 
-# setStyle ... Sets the style of the QT Application.
+# setStyle ... Sets the style of the QT Application. Right now using edgy black.
 def setStyle(qApp):
     qApp.setStyle("Fusion")
 
     dark_palette = QPalette()
-
-    white = QColor(255, 255, 255)
-    red = QColor(255, 0, 0)
-    black = QColor(0, 0, 0)
 
     dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.WindowText, Qt.white)
@@ -169,7 +165,7 @@ def setStyle(qApp):
     dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
     dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-    dark_palette.setColor(QPalette.Text, white)
+    dark_palette.setColor(QPalette.Text, Qt.white)
     dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.ButtonText, Qt.white)
     dark_palette.setColor(QPalette.BrightText, Qt.white)
