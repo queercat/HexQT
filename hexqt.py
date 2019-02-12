@@ -1,7 +1,8 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
 import sys, os
-from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QDesktopWidget
 from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase
 from PyQt5.QtCore import Qt, pyqtSlot
 
@@ -28,8 +29,8 @@ class App(QMainWindow):
         self.title = 'HexQT'
         self.left = 0
         self.top = 0
-        self.width = 1280
-        self.height = 480
+        self.width = 1024
+        self.height = 640
         self.initUI()
 
     def readFile(self, fileName):
@@ -66,6 +67,12 @@ class App(QMainWindow):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        # Center the window.
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+        
         mainMenu = self.menuBar() # Creates a menu bar, (file, edit, options, etc...)
 
         # Menus for window.
