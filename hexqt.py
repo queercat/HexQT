@@ -53,6 +53,9 @@ class App(QMainWindow):
 
         self.readFile(fileName)
 
+    def saveFile(self):
+        print('Saved!')
+
     def createMainView(self):
         self.textArea = QTextEdit()
 
@@ -71,11 +74,17 @@ class App(QMainWindow):
         viewMenu = mainMenu.addMenu('View')
         helpMenu = mainMenu.addMenu('Help')
 
-        # Open menu.
+        # Open button.
         openButton = QAction(QIcon(), 'Open', self)
         openButton.setShortcut('Ctrl+O')
         openButton.setStatusTip('Open file')
         openButton.triggered.connect(self.openFile)
+
+        # Save button.
+        saveButton = QAction(QIcon(), 'Save', self)
+        saveButton.setShortcut('Ctrl+S')
+        saveButton.setStatusTip('Open file')
+        saveButton.triggered.connect(self.saveFile)
 
         # Optional exit stuff.
         exitButton = QAction(QIcon(), 'Exit', self)
@@ -84,6 +93,7 @@ class App(QMainWindow):
         exitButton.triggered.connect(self.close)
         
         fileMenu.addAction(openButton)
+        fileMenu.addAction(saveButton)
         fileMenu.addAction(exitButton)
 
         # Creating a groupbox layout.
@@ -107,7 +117,9 @@ def addColor(text, color):
 def generateView(text, options):
     space = ' ' * 4
     offset = 0x00000000
-    newText = addColor(format(offset, '08x'), 'red') + space # Format to print hex properly.
+    fontStart = '<font size="3" face="Courier New">'
+    fontEnd = '</font>'
+    newText = fontStart + addColor(format(offset, '08x'), 'red') + space # Format to print hex properly.
     asciiText = ''
 
     rowSpacing = options['rowSpacing']
@@ -132,7 +144,7 @@ def generateView(text, options):
             
             asciiText = ''
 
-    return newText
+    return newText + fontEnd
 
 # setStyle ... Sets the style of the QT Application.
 def setStyle(qApp):
@@ -158,9 +170,9 @@ def setStyle(qApp):
     dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 
-    font = QFont("DejaVu Sans Mono", 12, QFont.Normal, True)
+    # font = QFont("DejaVu Sans Mono", 12, QFont.Normal, True)
 
-    qApp.setFont(font)
+    # qApp.setFont(font)
     qApp.setPalette(dark_palette)
 
     qApp.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
