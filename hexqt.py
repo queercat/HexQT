@@ -1,10 +1,10 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
 
 import sys, os
-from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QHBoxLayout, QAbstractScrollArea
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QDesktopWidget
 from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QObject, pyqtSignal
 
 class FileSelector(QFileDialog):
     def __init__(self):
@@ -31,6 +31,7 @@ class App(QMainWindow):
         self.top = 0
         self.width = 1024
         self.height = 640
+
         self.initUI()
 
     def readFile(self, fileName):
@@ -46,9 +47,8 @@ class App(QMainWindow):
 
         self.generateView(fileData, options)
 
-        # generateView ... Generates text view for hexdump likedness.
+    # generateView ... Generates text view for hexdump likedness.
     def generateView(self, text, options):
-        # Standard spacing.
         space = ' '
         bigSpace = ' ' * 4 
 
@@ -72,7 +72,7 @@ class App(QMainWindow):
                 asciiText += '.'
 
             else:
-                asciiText += char
+                asciiText += repr(char).replace('\'', '')
 
             mainText += format(byte, '04x') + space
 
@@ -81,6 +81,7 @@ class App(QMainWindow):
 
             if chars % rowLength is 0:
                 mainText += bigSpace + '\n'
+                asciiText += '\n'
             
         self.offsetTextArea.setText(offsetText)
         self.mainTextArea.setText(mainText)
@@ -108,11 +109,16 @@ class App(QMainWindow):
         self.offsetTextArea.setReadOnly(True)
 
         # Create the fonts and styles to be used and then apply them.
-        font = QFont("DejaVu Sans Mono", 8, QFont.Normal, True)
+        font = QFont("DejaVu Sans Mono", 10, QFont.Normal, True)
         
         self.mainTextArea.setFont(font)
         self.asciiTextArea.setFont(font)
         self.offsetTextArea.setFont(font)
+
+        self.offsetTextArea.setTextColor(Qt.red)
+
+        # Syncing scrolls.
+        syncScrolls(self, self.mainTextArea, self.asciiTextArea, self.offsetTextArea)
 
         qhBox.addWidget(self.offsetTextArea, 1)
         qhBox.addWidget(self.mainTextArea, 4)
@@ -170,6 +176,41 @@ class App(QMainWindow):
 
         # Show our masterpiece.
         self.show()
+
+def ret(value):
+    return value
+
+# syncScrolls ... Syncs the horizontal scrollbars of multiple qTextEdit objects. Rather clunky but it works.
+def syncScrolls(self, qTextObj0, qTextObj1, qTextObj2):
+    scroll0 = qTextObj0.verticalScrollBar()
+    scroll1 = qTextObj1.verticalScrollBar()
+    scroll2 = qTextObj2.verticalScrollBar()
+    
+    # There seems to be no better way of doing this at present so...
+
+    scroll0.valueChanged.connect(    
+        scroll1.setValue
+    )
+
+    scroll0.valueChanged.connect(    
+        scroll2.setValue
+    )
+
+    scroll1.valueChanged.connect(    
+        scroll0.setValue
+    )
+
+    scroll1.valueChanged.connect(    
+        scroll2.setValue
+    )
+
+    scroll2.valueChanged.connect(    
+        scroll1.setValue
+    )
+
+    scroll2.valueChanged.connect(    
+        scroll0.setValue
+    )
 
 # setStyle ... Sets the style of the QT Application. Right now using edgy black.
 def setStyle(qApp):
