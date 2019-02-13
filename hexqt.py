@@ -1,10 +1,16 @@
 # hexqt.py -- HexQT a pretty QT hext editor.
+import sys, os, enum
 
-import sys, os
+# QT5 Python Binding
 from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QHBoxLayout, QAbstractScrollArea
-from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QDesktopWidget
-from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase
+from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QDesktopWidget, QSpacerItem, QSizePolicy
+from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase, QTextCharFormat, QTextCursor
 from PyQt5.QtCore import Qt, pyqtSlot, QObject, pyqtSignal
+
+class Mode(enum.Enum):
+    READ = 0 # Purely read the hex.
+    ADDITION = 1 # Add to the hex.
+    OVERRIDE = 2 # Override the current text.
 
 class FileSelector(QFileDialog):
     def __init__(self):
@@ -18,8 +24,7 @@ class FileSelector(QFileDialog):
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"Directory View", "","All Files (*)", options=options)
         
-        self.fileName = fileName
-        
+        self.fileName = fileName 
 
 class App(QMainWindow):
     def __init__(self):
@@ -29,31 +34,32 @@ class App(QMainWindow):
         self.title = 'HexQT'
         self.left = 0
         self.top = 0
-        self.width = 1024
-        self.height = 640
+        self.width = 1280
+        self.height = 840
+
+        self.rowSpacing = 4 # How many bytes before a double space.
+        self.rowLength = 16 # How many bytes in a row.
+        self.byteWidth = 4 # How many bits to include in a byte.
+        self.mode = Mode.READ
 
         self.initUI()
 
+    # readFile ... Reads file data from a file in the form of bytes and generates the text for the hex-editor.
     def readFile(self, fileName):
         fileData = ''
         
         with open(fileName, 'rb') as fileObj:
             fileData = fileObj.read()
 
-        options = {
-            'rowSpacing': 4,
-            'rowLength': 16
-        }
-
-        self.generateView(fileData, options)
+        self.generateView(fileData)
 
     # generateView ... Generates text view for hexdump likedness.
-    def generateView(self, text, options):
+    def generateView(self, text):
         space = ' '
         bigSpace = ' ' * 4 
 
-        rowSpacing = options['rowSpacing']
-        rowLength = options['rowLength']
+        rowSpacing = self.rowSpacing
+        rowLength = self.rowLength
 
         offset = 0
 
@@ -65,37 +71,95 @@ class App(QMainWindow):
             byte = text[chars - 1]
             char = chr(text[chars - 1])
 
-            offsetText += format(offset, '08x') + '\n'
-            offset += rowLength
-
             if char is ' ':
                 asciiText += '.'
 
+            elif char is '\n':
+                asciiText += '!'
+
             else:
-                asciiText += repr(char).replace('\'', '')
+                asciiText += char.format('UTF-8')
 
-            mainText += format(byte, '04x') + space
-
-            if chars % rowSpacing is 0:
-                mainText += space
+            mainText += format(byte, '0' + str(self.byteWidth) + 'x')
 
             if chars % rowLength is 0:
-                mainText += bigSpace + '\n'
+                offsetText += format(offset, '08x') + '\n'
+                mainText += '\n'
                 asciiText += '\n'
+
+            elif chars % rowSpacing is 0:
+                mainText += space * 2
+
+            else:
+                mainText += space
+
+            offset += len(char)
             
         self.offsetTextArea.setText(offsetText)
         self.mainTextArea.setText(mainText)
         self.asciiTextArea.setText(asciiText)
-        
+    
+    # openFile ... Opens a file directory and returns the filename.
     def openFile(self):
         fileSelect = FileSelector()
         fileName = fileSelect.fileName
 
         self.readFile(fileName)
 
+    # saveFile ... Method for saving the edited hex file.
     def saveFile(self):
         print('Saved!')
 
+    # highlightMain ... Bi-directional highlighting from main.
+    def highlightMain(self):
+        # Create and get cursors for getting and setting selections.
+        highlightCursor = QTextCursor(self.asciiTextArea.document())
+        cursor = self.mainTextArea.textCursor()
+
+        # Clear any current selections and reset text color.
+        highlightCursor.select(QTextCursor.Document)
+        highlightCursor.setCharFormat(QTextCharFormat())
+        highlightCursor.clearSelection()
+
+        # Information about where selections and rows start.
+        selectedText = cursor.selectedText() # The actual text selected.
+        selectionStart = cursor.selectionStart()
+        selectionEnd = cursor.selectionEnd()
+
+        mainText = self.mainTextArea.toPlainText().replace('\n', 'A')
+
+        totalBytes = 0
+
+        for char in mainText[selectionStart:selectionEnd]:
+            if char is not ' ':
+                totalBytes += len(char)
+
+        asciiStart = 0
+
+        for char in mainText[:selectionStart]:
+            if char is not ' ':
+                asciiStart += len(char)
+
+        totalBytes = round(totalBytes / self.byteWidth)
+        asciiStart = round(asciiStart / self.byteWidth)
+        asciiEnd = asciiStart + totalBytes
+    
+        asciiText = self.asciiTextArea.toPlainText()
+
+        # Select text and highlight it.
+        highlightCursor.setPosition(asciiStart, QTextCursor.MoveAnchor)
+        highlightCursor.setPosition(asciiEnd, QTextCursor.KeepAnchor)
+        
+        highlight = QTextCharFormat()
+        highlight.setBackground(Qt.red)
+        highlightCursor.setCharFormat(highlight)
+        highlightCursor.clearSelection()
+
+    # highlightAscii ... Bi-directional highlighting from ascii.
+    def highlightAscii(self):
+        selectedText = self.asciiTextArea.textCursor().selectedText()
+
+    # createMainView ... Creates the primary view and look of the application (3-text areas.)
     def createMainView(self):
         qhBox = QHBoxLayout()
 
@@ -109,7 +173,7 @@ class App(QMainWindow):
         self.offsetTextArea.setReadOnly(True)
 
         # Create the fonts and styles to be used and then apply them.
-        font = QFont("DejaVu Sans Mono", 10, QFont.Normal, True)
+        font = QFont("DejaVu Sans Mono", 12, QFont.Normal, True)
         
         self.mainTextArea.setFont(font)
         self.asciiTextArea.setFont(font)
@@ -118,14 +182,19 @@ class App(QMainWindow):
         self.offsetTextArea.setTextColor(Qt.red)
 
         # Syncing scrolls.
-        syncScrolls(self, self.mainTextArea, self.asciiTextArea, self.offsetTextArea)
+        syncScrolls(self.mainTextArea, self.asciiTextArea, self.offsetTextArea)
+
+        # Highlight linking. BUG-GY
+        # self.mainTextArea.selectionChanged.connect(self.highlightMain)
+        # self.asciiTextArea.selectionChanged.connect(self.highlightAscii)
 
         qhBox.addWidget(self.offsetTextArea, 1)
-        qhBox.addWidget(self.mainTextArea, 4)
+        qhBox.addWidget(self.mainTextArea, 6)
         qhBox.addWidget(self.asciiTextArea, 2)
 
         return qhBox
 
+    # initUI ... Initializes the min look of the application.
     def initUI(self):
         # Initialize basic window options.
         self.setWindowTitle(self.title)
@@ -177,11 +246,8 @@ class App(QMainWindow):
         # Show our masterpiece.
         self.show()
 
-def ret(value):
-    return value
-
 # syncScrolls ... Syncs the horizontal scrollbars of multiple qTextEdit objects. Rather clunky but it works.
-def syncScrolls(self, qTextObj0, qTextObj1, qTextObj2):
+def syncScrolls(qTextObj0, qTextObj1, qTextObj2):
     scroll0 = qTextObj0.verticalScrollBar()
     scroll1 = qTextObj1.verticalScrollBar()
     scroll2 = qTextObj2.verticalScrollBar()

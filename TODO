@@ -3,3 +3,9 @@
 
 * Live Editing
     - Buffered editing? [Frame 1] -> [Frame 2] 
+
+* Bidirectional Highlighting
+    - Something wrong with highlighting parsing.
+
+* Large File Support
+    - Buffered chunking? [Break the file into parts and load them into memory.]
