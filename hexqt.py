@@ -44,10 +44,48 @@ class App(QMainWindow):
             'rowLength': 16
         }
 
-        text = generateView(fileData, options)
-        
-        self.textArea.setText(text)
+        self.generateView(fileData, options)
 
+        # generateView ... Generates text view for hexdump likedness.
+    def generateView(self, text, options):
+        # Standard spacing.
+        space = ' '
+        bigSpace = ' ' * 4 
+
+        rowSpacing = options['rowSpacing']
+        rowLength = options['rowLength']
+
+        offset = 0
+
+        offsetText = ''
+        mainText = ''
+        asciiText = ''
+
+        for chars in range(1, len(text) + 1):
+            byte = text[chars - 1]
+            char = chr(text[chars - 1])
+
+            offsetText += format(offset, '08x') + '\n'
+            offset += rowLength
+
+            if char is ' ':
+                asciiText += '.'
+
+            else:
+                asciiText += char
+
+            mainText += format(byte, '04x') + space
+
+            if chars % rowSpacing is 0:
+                mainText += space
+
+            if chars % rowLength is 0:
+                mainText += bigSpace + '\n'
+            
+        self.offsetTextArea.setText(offsetText)
+        self.mainTextArea.setText(mainText)
+        self.asciiTextArea.setText(asciiText)
+        
     def openFile(self):
         fileSelect = FileSelector()
         fileName = fileSelect.fileName
@@ -58,12 +96,29 @@ class App(QMainWindow):
         print('Saved!')
 
     def createMainView(self):
-        self.textArea = QTextEdit()
-        
-        font = QFont("DejaVu Sans Mono", 8, QFont.Normal, True)
-        self.textArea.setFont(font)
+        qhBox = QHBoxLayout()
 
-        return self.textArea
+        self.mainTextArea = QTextEdit()
+        self.offsetTextArea = QTextEdit()
+        self.asciiTextArea = QTextEdit()
+
+        # Initialize them all to read only.
+        self.mainTextArea.setReadOnly(True)
+        self.asciiTextArea.setReadOnly(True)
+        self.offsetTextArea.setReadOnly(True)
+
+        # Create the fonts and styles to be used and then apply them.
+        font = QFont("DejaVu Sans Mono", 8, QFont.Normal, True)
+        
+        self.mainTextArea.setFont(font)
+        self.asciiTextArea.setFont(font)
+        self.offsetTextArea.setFont(font)
+
+        qhBox.addWidget(self.offsetTextArea, 1)
+        qhBox.addWidget(self.mainTextArea, 4)
+        qhBox.addWidget(self.asciiTextArea, 2)
+
+        return qhBox
 
     def initUI(self):
         # Initialize basic window options.
@@ -76,7 +131,8 @@ class App(QMainWindow):
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
         
-        mainMenu = self.menuBar() # Creates a menu bar, (file, edit, options, etc...)
+        # Creates a menu bar, (file, edit, options, etc...)
+        mainMenu = self.menuBar() 
 
         # Menus for window.
         fileMenu = mainMenu.addMenu('File')
@@ -106,49 +162,14 @@ class App(QMainWindow):
         fileMenu.addAction(saveButton)
         fileMenu.addAction(exitButton)
 
-        # Creating a groupbox layout.
+        # Creating a widget for the central widget thingy.
+        centralWidget = QWidget()
+        centralWidget.setLayout(self.createMainView())
         
-        gBox = QGroupBox()
-
-        qLayout = QHBoxLayout()
-        qLayout.addWidget(self.createMainView())
-        
-        gBox.setLayout(qLayout)
-        self.setCentralWidget(gBox)
+        self.setCentralWidget(centralWidget)
 
         # Show our masterpiece.
         self.show()
-
-# generateView ... Generates text view for hexdump likedness.
-def generateView(text, options):
-    space = ' ' * 4
-    offset = 0x00000000
-    newText =  format(offset, '08x') + space # Format to print hex properly.
-    asciiText = ''
-
-    rowSpacing = options['rowSpacing']
-    rowLength = options['rowLength']
-
-    for chars in range(0, len(text)):
-        char = text[chars]
-        newText += format(char, '04x') +  '  ' # Format the hex to maintain max of 0x00 and 0xff.
-
-        if chr(char) is ' ':
-            asciiText += '.'
-        
-        else:
-            asciiText += repr(chr(char)).replace('\'', '')
-
-        if (chars + 1) % rowSpacing is 0:
-            newText += '  '
-
-        if (chars + 1) % rowLength is 0:
-            offset += rowLength
-            newText += space + asciiText + '\n\n' + format(offset, '08x') + space
-            
-            asciiText = ''
-
-    return newText
 
 # setStyle ... Sets the style of the QT Application. Right now using edgy black.
 def setStyle(qApp):
