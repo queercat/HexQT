@@ -1,6 +1,8 @@
-# HexQT
+# HexQT 
 -------------
 A QT (Pronounced Cute) Hex Editor written using the Python binding of QT5! 
+
+![](https://i.imgur.com/1B6KKaG.png)
 
 # Features
 --------------
@@ -17,9 +19,10 @@ A QT (Pronounced Cute) Hex Editor written using the Python binding of QT5!
 
 # Installation
 -----------------
-`git clone https://github.com/queercat/HexQT/`  
-`cd HexQT`  
-`pip install PyQt5`  
+`$ git clone https://github.com/queercat/HexQT/`  
+`$ cd HexQT`  
+`$ pip install PyQt5`  
 
->Now you're all installed and ready.  
-`python3 hexqt.py` to start.  
+# Running
+-----------------
+`$ python3 hexqt.py`
