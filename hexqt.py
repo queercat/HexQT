@@ -4,6 +4,7 @@ import sys, os, enum
 # QT5 Python Binding
 from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QVBoxLayout, QHBoxLayout, QAbstractScrollArea
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QGridLayout, QGroupBox, QTextEdit, QDesktopWidget, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QInputDialog, QLineEdit
 from PyQt5.QtGui import QIcon, QPalette, QColor, QFont, QFontDatabase, QTextCharFormat, QTextCursor
 from PyQt5.QtCore import Qt, pyqtSlot, QObject, pyqtSignal
 
@@ -23,8 +24,28 @@ class FileSelector(QFileDialog):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"Directory View", "","All Files (*)", options=options)
-        
+
         self.fileName = fileName 
+
+class InputDialogue(QInputDialog):
+    def __init__(self, title, text):
+        super().__init__()
+
+        # Dialogue options.
+        self.dialogueTitle = title
+        self.dialogueText = text
+
+        self.initUI()
+
+    # initUI ... Initialize the main view of the dialogue.
+    def initUI(self):
+        dialogueResponse, dialogueComplete = QInputDialog.getText(self, self.dialogueTitle, self.dialogueText, QLineEdit.Normal, '')
+
+        if dialogueComplete and dialogueResponse:
+            self.dialogueReponse = dialogueResponse
+        
+        else:
+            self.dialogueReponse = ''
 
 class App(QMainWindow):
     def __init__(self):
@@ -48,8 +69,9 @@ class App(QMainWindow):
     def readFile(self, fileName):
         fileData = ''
         
-        with open(fileName, 'rb') as fileObj:
-            fileData = fileObj.read()
+        if fileName:
+            with open(fileName, 'rb') as fileObj:
+                fileData = fileObj.read()
 
         self.generateView(fileData)
 
@@ -78,7 +100,7 @@ class App(QMainWindow):
                 asciiText += '!'
 
             else:
-                asciiText += char.format('UTF-8')
+                asciiText += char
 
             mainText += format(byte, '0' + str(self.byteWidth) + 'x')
 
@@ -159,6 +181,18 @@ class App(QMainWindow):
     def highlightAscii(self):
         selectedText = self.asciiTextArea.textCursor().selectedText()
 
+    # offsetJump ... Creates a dialogue and gets the offset to jump to and then jumps to that offset.
+    def offsetJump(self):
+        jumpText = InputDialogue('Jump to Offset', 'Offset').dialogueReponse
+        jumpOffset = 0xF
+
+        mainText = self.mainTextArea.toPlainText()
+        mainText = mainText.strip().replace('  ', ' ')
+
+
+
+        textCursor = self.mainTextArea.textCursor()
+            
     # createMainView ... Creates the primary view and look of the application (3-text areas.)
     def createMainView(self):
         qhBox = QHBoxLayout()
@@ -215,6 +249,8 @@ class App(QMainWindow):
         viewMenu = mainMenu.addMenu('View')
         helpMenu = mainMenu.addMenu('Help')
 
+        # FILE MENU ---------------------------------------
+
         # Open button.
         openButton = QAction(QIcon(), 'Open', self)
         openButton.setShortcut('Ctrl+O')
@@ -236,6 +272,16 @@ class App(QMainWindow):
         fileMenu.addAction(openButton)
         fileMenu.addAction(saveButton)
         fileMenu.addAction(exitButton)
+
+        # EDIT MENU ---------------------------------------
+
+        # Jump to Offset
+        offsetButton = QAction(QIcon(), 'Jump to Offset', self)
+        offsetButton.setShortcut('Ctrl+J')
+        offsetButton.setStatusTip('Jump to Offset')
+        offsetButton.triggered.connect(self.offsetJump)
+
+        editMenu.addAction(offsetButton)
 
         # Creating a widget for the central widget thingy.
         centralWidget = QWidget()
